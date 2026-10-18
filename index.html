@@ -1,11 +1,24 @@
 <html lang="en-us"><script id="cavo-offline">
 const originalFetch = window.fetch.bind(window);
+window.cavoDebug = window.cavoDebug || new URLSearchParams(location.search).has("debug");
+window.cavoReport = data => Object.assign(window, JSON.parse(data));
+let lastPads = null;
+window.cavoHasTouch = () => navigator.maxTouchPoints > 0;
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("canvas").forEach(canvas => {
+        canvas.style.touchAction = "none";
+        canvas.style.userSelect = "none";
+    });
+});
 window.cavoPollGamepads = function() {
-    if (!navigator.getGamepads) return "[]";
-    return JSON.stringify(Array.from(navigator.getGamepads(), pad => pad ? {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const data = JSON.stringify(Array.from(pads, pad => pad ? {
         connected: pad.connected, axes: Array.from(pad.axes),
         buttons: Array.from(pad.buttons, button => button.value)
     } : null));
+    if (data === lastPads) return "";
+    lastPads = data;
+    return data;
 };
 window.fetch = function(input, init) {
     const url = typeof input === "string" ? input : input.url || String(input);
